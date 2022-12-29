@@ -1,7 +1,3 @@
-//
-// Created by mephi on 20/12/22.
-//
-
 #include <cstdio>
 #include "CPU.h"
 
@@ -94,6 +90,14 @@ bool CPU::step()
             setRegister(instructionBuffers[0], getRegister(instructionBuffers[1]) | getRegister(instructionBuffers[2]));
             break;
         case 0x0C:
+            // andi
+            registerBuffers[0] = getRegister(instructionBuffers[2]);
+            setRegister(instructionBuffers[0], registerBuffers[0]&instructionBuffers[3]);
+            break;
+        case 0x0D:
+            // ori
+            registerBuffers[0] = getRegister(instructionBuffers[2]);
+            setRegister(instructionBuffers[0], registerBuffers[0]|instructionBuffers[3]);
             break;
         case 0xFF:
             // end
@@ -139,9 +143,9 @@ void CPU::setMemory(uint32_t memAddr, uint8_t value) {
 
 void CPU::loadWord(uint32_t wordAddr, uint32_t* wordPtr) {
     *wordPtr = getMemory(wordAddr);
-    *wordPtr = (*wordPtr << 8) + getMemory(wordAddr+1);
-    *wordPtr = (*wordPtr << 8) + getMemory(wordAddr+2);
-    *wordPtr = (*wordPtr << 8) + getMemory(wordAddr+3);
+    *wordPtr = (*wordPtr << 8) | getMemory(wordAddr+1);
+    *wordPtr = (*wordPtr << 8) | getMemory(wordAddr+2);
+    *wordPtr = (*wordPtr << 8) | getMemory(wordAddr+3);
 }
 
 void CPU::setWord(uint32_t wordAddr, uint32_t word) {
