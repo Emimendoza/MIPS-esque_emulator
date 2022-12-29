@@ -12,7 +12,7 @@ void CPU::run()
 
 bool CPU::step()
 {
-    instruction = getMemory(programCounter);
+    loadWord(programCounter, &instruction);
     // Op Code
     instructionBuffers[0] = (instruction >> 24) & 0xff;
     // Arg 1
@@ -125,14 +125,25 @@ void CPU::setRegister(uint8_t regNum, uint32_t value)
     registers[regNum-1] = value;
 }
 
-uint32_t CPU::getMemory(uint32_t memAddr) {
+uint8_t CPU::getMemory(uint32_t memAddr) {
     if (programCounter==0xFF)
     {
-        return 0xFF000000;
+        return 0xFF;
     }
-    return 0;
+    return 0x00;
 }
 
-void CPU::setMemory(uint32_t memAddr, uint32_t value) {
+void CPU::setMemory(uint32_t memAddr, uint8_t value) {
+
+}
+
+void CPU::loadWord(uint32_t wordAddr, uint32_t* wordPtr) {
+    *wordPtr = getMemory(wordAddr);
+    *wordPtr = (*wordPtr << 8) + getMemory(wordAddr+1);
+    *wordPtr = (*wordPtr << 8) + getMemory(wordAddr+2);
+    *wordPtr = (*wordPtr << 8) + getMemory(wordAddr+3);
+}
+
+void CPU::setWord(uint32_t wordAddr, uint32_t word) {
 
 }

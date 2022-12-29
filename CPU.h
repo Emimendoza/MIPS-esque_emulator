@@ -26,8 +26,10 @@ private:
     // Functions
     uint32_t getRegister(uint8_t regNum);
     void setRegister(uint8_t regNum, uint32_t value);
-    uint32_t getMemory(uint32_t memAddr);
-    void setMemory(uint32_t memAddr, uint32_t value);
+    uint8_t getMemory(uint32_t memAddr);
+    void setMemory(uint32_t memAddr, uint8_t value);
+    void loadWord(uint32_t wordAddr, uint32_t* wordPtr);
+    void setWord(uint32_t wordAddr, uint32_t word);
 };
 
 #endif //MIPS_CPU_H
