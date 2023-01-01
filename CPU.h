@@ -1,14 +1,22 @@
 #ifndef MIPS_CPU_H
 #define MIPS_CPU_H
 
-
 #include <cstdint>
 
 class CPU {
 public:
+    struct CPUInfo
+    {
+        uint8_t CPUId;
+        uint8_t ROMType;
+        char* ROMPath;
+    };
     bool step();
     void run();
+    explicit CPU(CPUInfo cpuInfo);
 private:
+    // Meta Info
+    uint8_t CPUId;
     // CPU Registers and Stuff
     uint32_t programCounter;
     uint32_t registers[30];
@@ -22,7 +30,11 @@ private:
     int64_t multiplicationBuffer;
     int32_t divisionBuffer;
     // Memory
-    uint32_t* memory;
+    uint32_t** memory;
+    uint32_t romEnd;
+    uint32_t reservedStart;
+    // ROM
+    uint32_t* CPURom;
     // Functions
     uint32_t getRegister(uint8_t regNum);
     void setRegister(uint8_t regNum, uint32_t value);

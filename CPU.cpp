@@ -1,6 +1,19 @@
 #include <cstdio>
 #include "CPU.h"
 
+
+CPU::CPU(CPU::CPUInfo cpuInfo)
+{
+    programCounter = 0;
+    hi = 0;
+    lo = 0;
+    for (unsigned int & i : registers)
+    {
+        i = 0;
+    }
+    CPUId = cpuInfo.CPUId;
+}
+
 void CPU::run()
 {
     while (!step()){}
@@ -107,7 +120,7 @@ bool CPU::step()
             break;
     }
 
-    programCounter++;
+    programCounter += 4;
     return false;
 }
 
@@ -149,5 +162,8 @@ void CPU::loadWord(uint32_t wordAddr, uint32_t* wordPtr) {
 }
 
 void CPU::setWord(uint32_t wordAddr, uint32_t word) {
-
+    setMemory(wordAddr,word&0xFF);
+    setMemory(wordAddr+1,(word>>8)&0xFF);
+    setMemory(wordAddr+2,(word>>16)&0xFF);
+    setMemory(wordAddr+3,(word>>24)&0xFF);
 }
