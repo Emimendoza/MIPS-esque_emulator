@@ -76,10 +76,8 @@ bool CPU::step()
             break;
         case 0x08:
             // mult
-            registerBuffers[0] = getRegister(instructionBuffers[2]);
-            registerBuffers[1] = getRegister(instructionBuffers[3]);
-            multiplicationBuffer = *(int32_t*)&registerBuffers[0];
-            multiplicationBuffer *= *(int32_t*)&registerBuffers[1];
+            multiplicationBuffer = getRegister(instructionBuffers[2]);
+            multiplicationBuffer *= getRegister(instructionBuffers[3]);
             hi = ((*(uint64_t*)&multiplicationBuffer) >> 32) & 0xFFFFFFFF;
             lo = (*(uint64_t*)&multiplicationBuffer) & 0xFFFFFFFF;
             break;
