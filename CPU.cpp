@@ -1,6 +1,22 @@
 #include <cstdio>
+#include <iostream>
 #include "CPU.h"
+#include <filesystem>
 
+// Helper Functions
+uint32_t roundUp(uint32_t numToRound, uint32_t multiple)
+{
+    if (multiple == 0)
+        return numToRound;
+
+    uint32_t remainder = numToRound % multiple;
+    if (remainder == 0)
+        return numToRound;
+
+    return numToRound + multiple - remainder;
+}
+
+// Class Functions
 
 CPU::CPU(CPU::CPUInfo cpuInfo)
 {
@@ -12,6 +28,50 @@ CPU::CPU(CPU::CPUInfo cpuInfo)
         i = 0;
     }
     CPUId = cpuInfo.CPUId;
+    FILE* ROMPtr;
+    uint32_t rawRomSize;
+
+    switch (cpuInfo.ROMType)
+    {
+        case 0:
+            // BIN
+            rawRomSize = std::filesystem::file_size({cpuInfo.ROMPath}); // Get file size
+            romSize = roundUp(rawRomSize,1048576); // need to round to the nearest byte
+            CPURom = (uint8_t*)malloc(sizeof(uint8_t)* romSize); // make array for rom
+            ROMPtr = fopen(cpuInfo.ROMPath,"rb"); // Open BIN File
+            fread(CPURom,rawRomSize,1,ROMPtr); // Copy rom to array
+            fclose(ROMPtr);
+            break;
+        case 255:
+            // Dry run
+            rawRomSize = 1;
+            romSize = roundUp(rawRomSize,1048576);
+            CPURom = (uint8_t*)malloc(sizeof(uint8_t)* romSize);
+            CPURom[0] = 0xFF;
+            break;
+        default:
+            fatalError("Invalid ROMType");
+    }
+    for(uint32_t i = rawRomSize; i< romSize; i++)
+    {
+        CPURom[i] = 0x00; // Fill the rest with 0x00
+    }
+    for(uint32_t i = 0; i < romSize/1048576; i++)
+    {
+        setters[i] = &CPU::setRom;
+        getters[i] = &CPU::getRom;
+    }
+    for(uint32_t i = romSize/1048576; i <4096; i++) // TODO: Change this to support the shared mem and reserved mem
+    {
+        setters[i] = &CPU::setUninitializedRam;
+        getters[i] = &CPU::getUninitializedRam;
+    }
+
+}
+
+CPU::~CPU()
+{
+    free(CPURom);
 }
 
 void CPU::run()
@@ -30,7 +90,6 @@ bool CPU::step()
     instructionBuffers[2] = (instruction >> 8) & 0xff;
     // Arg 3
     instructionBuffers[3] = instruction & 0xff;
-    printf("value of b: %X [%x]\n",instruction,instruction);
 
     // Do the instructions
     switch (instructionBuffers[0])
@@ -115,9 +174,8 @@ bool CPU::step()
             return true;
         default:
             // No OP or not supported OP Code
-            break;
+            break; // TODO: finish instruction set
     }
-
     programCounter += 4;
     return false;
 }
@@ -140,28 +198,66 @@ void CPU::setRegister(uint8_t regNum, uint32_t value)
     registers[regNum-1] = value;
 }
 
-uint8_t CPU::getMemory(uint32_t memAddr) {
-    if (programCounter==0xFF)
-    {
-        return 0xFF;
-    }
-    return 0x00;
+void CPU::loadWord(uint32_t wordAddr, uint32_t* wordPtr)
+{
+    *wordPtr = getAddress(wordAddr);
+    *wordPtr = (*wordPtr << 8) | getAddress(wordAddr+1);
+    *wordPtr = (*wordPtr << 8) | getAddress(wordAddr+2);
+    *wordPtr = (*wordPtr << 8) | getAddress(wordAddr+3);
 }
 
-void CPU::setMemory(uint32_t memAddr, uint8_t value) {
-
+void CPU::setWord(uint32_t wordAddr, uint32_t word)
+{
+    setAddress(wordAddr,word&0xFF);
+    setAddress(wordAddr+1,(word>>8)&0xFF);
+    setAddress(wordAddr+2,(word>>16)&0xFF);
+    setAddress(wordAddr+3,(word>>24)&0xFF);
 }
 
-void CPU::loadWord(uint32_t wordAddr, uint32_t* wordPtr) {
-    *wordPtr = getMemory(wordAddr);
-    *wordPtr = (*wordPtr << 8) | getMemory(wordAddr+1);
-    *wordPtr = (*wordPtr << 8) | getMemory(wordAddr+2);
-    *wordPtr = (*wordPtr << 8) | getMemory(wordAddr+3);
+void CPU::assemble(std::vector<std::string> *assembly)
+{
+    // TODO: Finish assembler
 }
 
-void CPU::setWord(uint32_t wordAddr, uint32_t word) {
-    setMemory(wordAddr,word&0xFF);
-    setMemory(wordAddr+1,(word>>8)&0xFF);
-    setMemory(wordAddr+2,(word>>16)&0xFF);
-    setMemory(wordAddr+3,(word>>24)&0xFF);
+void CPU::fatalError(const std::string& errorMsg) const
+{
+    std::cerr << CPUId << errorMsg << '\n';
+    throw std::exception();
+}
+
+uint8_t CPU::getAddress(uint32_t memAddr)
+{
+    return (this->*getters[memAddr/1048576])(memAddr);
+}
+
+void CPU::setAddress(uint32_t memAddr, const uint8_t& value)
+{
+    (this->*setters[memAddr/1048576])(memAddr,value);
+}
+
+uint8_t CPU::getRom(uint32_t addr)
+{
+    return CPURom[addr];
+}
+
+void CPU::setRom(uint32_t addr, const uint8_t& value){}
+
+uint8_t CPU::getRam(uint32_t addr)
+{
+    return memory[addr/1048576][addr%1048576];
+}
+
+void CPU::setRam(uint32_t addr, const uint8_t& value)
+{
+    memory[addr/1048576][addr%1048576] = value;
+}
+
+uint8_t CPU::getUninitializedRam(uint32_t addr)
+{
+    return 0;
+}
+
+void CPU::setUninitializedRam(uint32_t addr, const uint8_t& value)
+{
+    // TODO: malloc ram
 }

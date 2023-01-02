@@ -2,6 +2,8 @@
 #define MIPS_CPU_H
 
 #include <cstdint>
+#include <vector>
+#include <string>
 
 class CPU {
 public:
@@ -10,10 +12,12 @@ public:
         uint8_t CPUId;
         uint8_t ROMType;
         char* ROMPath;
+        uint32_t* sharedRamPtr;
     };
     bool step();
     void run();
     explicit CPU(CPUInfo cpuInfo);
+    ~CPU();
 private:
     // Meta Info
     uint8_t CPUId;
@@ -30,18 +34,30 @@ private:
     int64_t multiplicationBuffer;
     int32_t divisionBuffer;
     // Memory
-    uint32_t** memory;
-    uint32_t romEnd;
+    uint8_t** memory;
+    uint32_t romSize;
     uint32_t reservedStart;
+    uint8_t (CPU::*getters[4096])(uint32_t addr);
+    void (CPU::*setters[4096])(uint32_t addr, const uint8_t& value);
+    uint64_t setOrNot[64];
     // ROM
-    uint32_t* CPURom;
+    uint8_t* CPURom;
     // Functions
+    void assemble(std::vector<std::string>* assembly);
+    void fatalError(const std::string& errorMsg) const;
     uint32_t getRegister(uint8_t regNum);
     void setRegister(uint8_t regNum, uint32_t value);
-    uint8_t getMemory(uint32_t memAddr);
-    void setMemory(uint32_t memAddr, uint8_t value);
     void loadWord(uint32_t wordAddr, uint32_t* wordPtr);
     void setWord(uint32_t wordAddr, uint32_t word);
+    // Memory Functions
+    uint8_t getAddress(uint32_t memAddr);
+    void setAddress(uint32_t memAddr,const uint8_t&  value);
+    uint8_t getRom(uint32_t addr);
+    void setRom(uint32_t addr, const uint8_t& value);
+    uint8_t getRam(uint32_t addr);
+    void setRam(uint32_t addr, const uint8_t& value);
+    uint8_t getUninitializedRam(uint32_t addr);
+    void setUninitializedRam(uint32_t addr, const uint8_t& value);
 };
 
 #endif //MIPS_CPU_H
