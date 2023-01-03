@@ -66,12 +66,24 @@ CPU::CPU(CPU::CPUInfo cpuInfo)
         setters[i] = &CPU::setUninitializedRam;
         getters[i] = &CPU::getUninitializedRam;
     }
-
+    for(bool & set : setOrNot)
+    {
+        set = false;
+    }
+    memory = (uint8_t**)malloc(sizeof(uint8_t*)*4096);
 }
 
 CPU::~CPU()
 {
     free(CPURom);
+    for(uint32_t  i = 0; i < 4096; i++)
+    {
+        if(setOrNot[i])
+        {
+            free(memory[i]);
+        }
+    }
+    free(memory);
 }
 
 void CPU::run()
@@ -153,21 +165,26 @@ bool CPU::step()
             break;
         case 0x0A:
             // and
-            setRegister(instructionBuffers[0], getRegister(instructionBuffers[1]) & getRegister(instructionBuffers[2]));
+            setRegister(instructionBuffers[1], getRegister(instructionBuffers[1]) & getRegister(instructionBuffers[2]));
             break;
         case 0x0B:
             // or
-            setRegister(instructionBuffers[0], getRegister(instructionBuffers[1]) | getRegister(instructionBuffers[2]));
+            setRegister(instructionBuffers[1], getRegister(instructionBuffers[1]) | getRegister(instructionBuffers[2]));
             break;
         case 0x0C:
             // andi
-            registerBuffers[0] = getRegister(instructionBuffers[2]);
-            setRegister(instructionBuffers[0], registerBuffers[0]&instructionBuffers[3]);
+            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])&instructionBuffers[3]);
             break;
         case 0x0D:
             // ori
-            registerBuffers[0] = getRegister(instructionBuffers[2]);
-            setRegister(instructionBuffers[0], registerBuffers[0]|instructionBuffers[3]);
+            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])|instructionBuffers[3]);
+            break;
+        case 0x0E:
+            // sll
+            setRegister(instructionBuffers[1],getRegister(instructionBuffers[2]) << instructionBuffers[3]);
+            break;
+        case 0x0F:
+            setRegister(instructionBuffers[1],getRegister(instructionBuffers[2]) >> instructionBuffers[3]);
             break;
         case 0xFF:
             // end
@@ -257,7 +274,9 @@ uint8_t CPU::getUninitializedRam(uint32_t addr)
     return 0;
 }
 
-void CPU::setUninitializedRam(uint32_t addr, const uint8_t& value)
-{
-    // TODO: malloc ram
+void CPU::setUninitializedRam(uint32_t addr, const uint8_t& value) {
+    memory[addr / 1048576] = (uint8_t *) malloc(sizeof(uint8_t) * 1048576);
+    setOrNot[addr / 1048576] = true;
+    setters[addr / 1048576] = &CPU::setRam;
+    memory[addr/1048576][addr%1048576] = value;
 }

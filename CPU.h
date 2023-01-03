@@ -39,7 +39,7 @@ private:
     uint32_t reservedStart;
     uint8_t (CPU::*getters[4096])(uint32_t addr);
     void (CPU::*setters[4096])(uint32_t addr, const uint8_t& value);
-    uint64_t setOrNot[64];
+    bool setOrNot[4096];
     // ROM
     uint8_t* CPURom;
     // Functions
