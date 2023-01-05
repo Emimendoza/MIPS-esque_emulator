@@ -20,13 +20,6 @@ uint32_t roundUp(uint32_t numToRound, uint32_t multiple)
 
 CPU::CPU(CPU::CPUInfo cpuInfo)
 {
-    programCounter = 0;
-    hi = 0;
-    lo = 0;
-    for (unsigned int & i : registers)
-    {
-        i = 0;
-    }
     CPUId = cpuInfo.CPUId;
     FILE* ROMPtr;
     uint32_t rawRomSize;
@@ -71,6 +64,13 @@ CPU::CPU(CPU::CPUInfo cpuInfo)
         set = false;
     }
     memory = (uint8_t**)malloc(sizeof(uint8_t*)*4096);
+    programCounter = 0;
+    hi = 0;
+    lo = 0;
+    for (unsigned int & i : registers)
+    {
+        i = 0;
+    }
 }
 
 CPU::~CPU()
@@ -106,6 +106,10 @@ bool CPU::step()
     // Do the instructions
     switch (instructionBuffers[0])
     {
+        case 0x00:
+            // No OP
+            break;
+        // ARITHMETIC
         case 0x01:
             // add
             registerBuffers[0] = getRegister(instructionBuffers[2]);
@@ -163,34 +167,70 @@ bool CPU::step()
             divisionBuffer /= *(int32_t*)&registerBuffers[1];
             lo = *(uint32_t*)&divisionBuffer;
             break;
-        case 0x0A:
+        // LOGICAL
+        case 0x10:
             // and
             setRegister(instructionBuffers[1], getRegister(instructionBuffers[1]) & getRegister(instructionBuffers[2]));
             break;
-        case 0x0B:
+        case 0x11:
             // or
             setRegister(instructionBuffers[1], getRegister(instructionBuffers[1]) | getRegister(instructionBuffers[2]));
             break;
-        case 0x0C:
+        case 0x12:
             // andi
             setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])&instructionBuffers[3]);
             break;
-        case 0x0D:
+        case 0x13:
             // ori
             setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])|instructionBuffers[3]);
             break;
-        case 0x0E:
+        case 0x14:
             // sll
             setRegister(instructionBuffers[1],getRegister(instructionBuffers[2]) << instructionBuffers[3]);
             break;
-        case 0x0F:
+        case 0x15:
+            // srl
             setRegister(instructionBuffers[1],getRegister(instructionBuffers[2]) >> instructionBuffers[3]);
             break;
+        // DATA TRANSFER
+        case 0x21:
+            // lw
+            loadWord(getRegister(instructionBuffers[3]) + instructionBuffers[2], &wordBuffer);
+            setRegister(instructionBuffers[1], wordBuffer);
+            break;
+        case 0x22:
+            // sw
+            wordBuffer = getRegister(instructionBuffers[1]);
+            setWord(getRegister(instructionBuffers[3]) + instructionBuffers[2],&wordBuffer);
+            break;
+        case 0x23:
+            // lui
+            wordBuffer = ((uint16_t*)instructionBuffers)[1];
+            wordBuffer = wordBuffer << 16;
+            setRegister(instructionBuffers[1], wordBuffer);
+            break;
+        case 0x24:
+            // li
+            setRegister(instructionBuffers[1],((uint16_t*)instructionBuffers)[1]);
+            break;
+        case 0x25:
+            // mfhi
+            setRegister(instructionBuffers[2], hi);
+            break;
+        case 0x26:
+            // mflo
+            setRegister(instructionBuffers[2], lo);
+            break;
+        case 0x27:
+            // move
+            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2]));
+            break;
+        // Conditional Branching
         case 0xFF:
-            // end
+            // hlt
             return true;
         default:
-            // No OP or not supported OP Code
+            // not supported OP Code
             break; // TODO: finish instruction set
     }
     programCounter += 4;
@@ -223,12 +263,12 @@ void CPU::loadWord(uint32_t wordAddr, uint32_t* wordPtr)
     *wordPtr = (*wordPtr << 8) | getAddress(wordAddr+3);
 }
 
-void CPU::setWord(uint32_t wordAddr, uint32_t word)
+void CPU::setWord(uint32_t wordAddr, const uint32_t* wordPtr)
 {
-    setAddress(wordAddr,word&0xFF);
-    setAddress(wordAddr+1,(word>>8)&0xFF);
-    setAddress(wordAddr+2,(word>>16)&0xFF);
-    setAddress(wordAddr+3,(word>>24)&0xFF);
+    setAddress(wordAddr,*wordPtr&0xFF);
+    setAddress(wordAddr+1,(*wordPtr>>8)&0xFF);
+    setAddress(wordAddr+2,(*wordPtr>>16)&0xFF);
+    setAddress(wordAddr+3,(*wordPtr>>24)&0xFF);
 }
 
 void CPU::assemble(std::vector<std::string> *assembly)
@@ -278,5 +318,6 @@ void CPU::setUninitializedRam(uint32_t addr, const uint8_t& value) {
     memory[addr / 1048576] = (uint8_t *) malloc(sizeof(uint8_t) * 1048576);
     setOrNot[addr / 1048576] = true;
     setters[addr / 1048576] = &CPU::setRam;
+    getters[addr / 1048576] = &CPU::getRam;
     memory[addr/1048576][addr%1048576] = value;
 }

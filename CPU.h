@@ -33,6 +33,7 @@ private:
     uint32_t registerBuffers[3];
     int64_t multiplicationBuffer;
     int32_t divisionBuffer;
+    uint32_t wordBuffer;
     // Memory
     uint8_t** memory;
     uint32_t romSize;
@@ -48,7 +49,7 @@ private:
     uint32_t getRegister(uint8_t regNum);
     void setRegister(uint8_t regNum, uint32_t value);
     void loadWord(uint32_t wordAddr, uint32_t* wordPtr);
-    void setWord(uint32_t wordAddr, uint32_t word);
+    void setWord(uint32_t wordAddr, const uint32_t* wordPtr);
     // Memory Functions
     uint8_t getAddress(uint32_t memAddr);
     void setAddress(uint32_t memAddr,const uint8_t&  value);
