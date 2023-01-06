@@ -9,7 +9,6 @@ class CPU {
 public:
     struct CPUInfo
     {
-        uint8_t CPUId;
         uint8_t ROMType;
         char* ROMPath;
         uint32_t* sharedRamPtr;
@@ -20,6 +19,7 @@ public:
     ~CPU();
 private:
     // Meta Info
+    static constinit uint8_t CPUIds;
     uint8_t CPUId;
     // CPU Registers and Stuff
     uint32_t programCounter;

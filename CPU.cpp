@@ -3,6 +3,8 @@
 #include "CPU.h"
 #include <filesystem>
 
+// Init static member
+constinit uint8_t CPU::CPUIds = 0;
 // Helper Functions
 uint32_t roundUp(uint32_t numToRound, uint32_t multiple)
 {
@@ -20,10 +22,10 @@ uint32_t roundUp(uint32_t numToRound, uint32_t multiple)
 
 CPU::CPU(CPU::CPUInfo cpuInfo)
 {
-    CPUId = cpuInfo.CPUId;
+    CPUId = CPUIds;
+    CPUIds++;
     FILE* ROMPtr;
-    uint32_t rawRomSize;
-
+    uint32_t rawRomSize = 0;
     switch (cpuInfo.ROMType)
     {
         case 0:
@@ -226,6 +228,48 @@ bool CPU::step()
             setRegister(instructionBuffers[1], getRegister(instructionBuffers[2]));
             break;
         // Conditional Branching
+        case 0x30:
+            // beq
+            if(getRegister(instructionBuffers[1])== getRegister(instructionBuffers[2]))
+            {
+                programCounter += instructionBuffers[3];
+            }
+            break;
+        case 0x31:
+            // bne
+            if(getRegister(instructionBuffers[1]) != getRegister(instructionBuffers[2]))
+            {
+                programCounter += instructionBuffers[3];
+            }
+            break;
+        case 0x32:
+            // bgt
+            if(getRegister(instructionBuffers[1]) > getRegister(instructionBuffers[2]))
+            {
+                programCounter += instructionBuffers[3];
+            }
+            break;
+        case 0x33:
+            // bge
+            if(getRegister(instructionBuffers[1]) >= getRegister(instructionBuffers[2]))
+            {
+                programCounter += instructionBuffers[3];
+            }
+            break;
+        case 0x34:
+            // blt
+            if(getRegister(instructionBuffers[1]) < getRegister(instructionBuffers[2]))
+            {
+                programCounter += instructionBuffers[3];
+            }
+            break;
+        case 0x35:
+            // ble
+            if(getRegister(instructionBuffers[1]) <= getRegister(instructionBuffers[2]))
+            {
+                programCounter += instructionBuffers[3];
+            }
+            break;
         case 0xFF:
             // hlt
             return true;
@@ -278,7 +322,7 @@ void CPU::assemble(std::vector<std::string> *assembly)
 
 void CPU::fatalError(const std::string& errorMsg) const
 {
-    std::cerr << CPUId << errorMsg << '\n';
+    std::cerr << "CPU " << unsigned(CPUId) << ": " << errorMsg << '\n';
     throw std::exception();
 }
 
