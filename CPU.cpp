@@ -31,7 +31,7 @@ CPU::CPU(CPU::CPUInfo cpuInfo)
         case 0:
             // BIN
             rawRomSize = std::filesystem::file_size({cpuInfo.ROMPath}); // Get file size
-            romSize = roundUp(rawRomSize,TWO_TO_20); // need to round to the nearest byte
+            romSize = roundUp(rawRomSize,TWO_TO_20); // need to round to the nearest Megabyte
             CPURom = (uint8_t*)malloc(sizeof(uint8_t)* romSize); // make array for rom
             ROMPtr = fopen(cpuInfo.ROMPath,"rb"); // Open BIN File
             fread(CPURom,rawRomSize,1,ROMPtr); // Copy rom to array
