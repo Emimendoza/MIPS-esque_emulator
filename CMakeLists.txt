@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.24)
 project(MIPS)
-
+set(NativePrecompiledHeaders 1)
 set(CMAKE_CXX_STANDARD 20)
-
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type")
+endif()
+set(CMAKE_BUILD_TYPE_VALUES "Debug;Release" CACHE INTERNAL "List of supported build")
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CMAKE_BUILD_TYPE_VALUES})
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+set(CMAKE_CXX_FLAGS "-march=native")
+set(CMAKE_CXX_FLAGS_DEBUG "-march=native -Og")
+set(CMAKE_CXX_FLAGS_RELEASE "-march=native -Ofast")
 add_executable(MIPS main.cpp CPU.cpp CPU.h)
