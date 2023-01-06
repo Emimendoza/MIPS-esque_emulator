@@ -31,7 +31,7 @@ CPU::CPU(CPU::CPUInfo cpuInfo)
         case 0:
             // BIN
             rawRomSize = std::filesystem::file_size({cpuInfo.ROMPath}); // Get file size
-            romSize = roundUp(rawRomSize,1048576); // need to round to the nearest byte
+            romSize = roundUp(rawRomSize,TWO_TO_20); // need to round to the nearest byte
             CPURom = (uint8_t*)malloc(sizeof(uint8_t)* romSize); // make array for rom
             ROMPtr = fopen(cpuInfo.ROMPath,"rb"); // Open BIN File
             fread(CPURom,rawRomSize,1,ROMPtr); // Copy rom to array
@@ -40,7 +40,7 @@ CPU::CPU(CPU::CPUInfo cpuInfo)
         case 255:
             // Dry run
             rawRomSize = 1;
-            romSize = roundUp(rawRomSize,1048576);
+            romSize = roundUp(rawRomSize,TWO_TO_20);
             CPURom = (uint8_t*)malloc(sizeof(uint8_t)* romSize);
             CPURom[0] = 0xFF;
             break;
@@ -51,12 +51,12 @@ CPU::CPU(CPU::CPUInfo cpuInfo)
     {
         CPURom[i] = 0x00; // Fill the rest with 0x00
     }
-    for(uint32_t i = 0; i < romSize/1048576; i++)
+    for(uint32_t i = 0; i < romSize>>20; i++)
     {
         setters[i] = &CPU::setRom;
         getters[i] = &CPU::getRom;
     }
-    for(uint32_t i = romSize/1048576; i <4096; i++) // TODO: Change this to support the shared mem and reserved mem
+    for(uint32_t i = romSize>>20; i <4096; i++) // TODO: Change this to support the shared mem and reserved mem
     {
         setters[i] = &CPU::setUninitializedRam;
         getters[i] = &CPU::getUninitializedRam;
