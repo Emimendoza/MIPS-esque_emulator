@@ -2,7 +2,7 @@
 #include <iostream>
 #include "CPU.h"
 #include <filesystem>
-
+#define TWO_TO_20 1048576
 // Init static member
 constinit uint8_t CPU::CPUIds = 0;
 // Helper Functions
@@ -328,12 +328,12 @@ void CPU::fatalError(const std::string& errorMsg) const
 
 uint8_t CPU::getAddress(uint32_t memAddr)
 {
-    return (this->*getters[memAddr/1048576])(memAddr);
+    return (this->*getters[memAddr>>20])(memAddr);
 }
 
 void CPU::setAddress(uint32_t memAddr, const uint8_t& value)
 {
-    (this->*setters[memAddr/1048576])(memAddr,value);
+    (this->*setters[memAddr>>20])(memAddr,value);
 }
 
 uint8_t CPU::getRom(uint32_t addr)
@@ -345,12 +345,12 @@ void CPU::setRom(uint32_t addr, const uint8_t& value){}
 
 uint8_t CPU::getRam(uint32_t addr)
 {
-    return memory[addr/1048576][addr%1048576];
+    return memory[addr>>20][(addr & (TWO_TO_20 -1))];
 }
 
 void CPU::setRam(uint32_t addr, const uint8_t& value)
 {
-    memory[addr/1048576][addr%1048576] = value;
+    memory[addr>>20][(addr & (TWO_TO_20 -1))] = value;
 }
 
 uint8_t CPU::getUninitializedRam(uint32_t addr)
@@ -359,9 +359,9 @@ uint8_t CPU::getUninitializedRam(uint32_t addr)
 }
 
 void CPU::setUninitializedRam(uint32_t addr, const uint8_t& value) {
-    memory[addr / 1048576] = (uint8_t *) malloc(sizeof(uint8_t) * 1048576);
-    setOrNot[addr / 1048576] = true;
-    setters[addr / 1048576] = &CPU::setRam;
-    getters[addr / 1048576] = &CPU::getRam;
-    memory[addr/1048576][addr%1048576] = value;
+    memory[addr >> 20 ] = (uint8_t *) malloc(sizeof(uint8_t) << 20);
+    setOrNot[addr >> 20] = true;
+    setters[addr >> 20] = &CPU::setRam;
+    getters[addr >> 20] = &CPU::getRam;
+    memory[addr >> 20][(addr & (TWO_TO_20 -1))] = value;
 }
