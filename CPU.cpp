@@ -270,12 +270,49 @@ bool CPU::step()
                 programCounter += instructionBuffers[3];
             }
             break;
+        // Comparison
+        case 0x40:
+            // slt
+            if (getRegister(instructionBuffers[2])< getRegister(instructionBuffers[3]))
+            {
+                setRegister(instructionBuffers[1],1);
+            }
+            else
+            {
+                setRegister(instructionBuffers[1],0);
+            }
+            break;
+        case 0x41:
+            // slti
+            if (getRegister(instructionBuffers[2]) < instructionBuffers[3])
+            {
+                setRegister(instructionBuffers[1],1);
+            }
+            else
+            {
+                setRegister(instructionBuffers[1],0);
+            }
+            break;
+        // Jumps
+        case 0x50:
+            // j
+            programCounter = instruction & 0x00FFFFFF;
+            return false;
+        case 0x51:
+            // jr
+            programCounter = getRegister(instructionBuffers[1]);
+            return false;
+        case 0x52:
+            // jal
+            setRegister(31,programCounter+4);
+            programCounter = instruction & 0x00FFFFFF;
+            return false;
         case 0xFF:
             // hlt
             return true;
         default:
             // not supported OP Code
-            break; // TODO: finish instruction set
+            break;
     }
     programCounter += 4;
     return false;
