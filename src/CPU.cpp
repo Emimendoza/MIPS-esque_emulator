@@ -97,16 +97,16 @@ bool CPU::step()
 {
     loadWord(programCounter, &instruction);
     // Op Code
-    instructionBuffers[0] = (instruction >> 24) & 0xff;
-    // Arg 1
-    instructionBuffers[1] = (instruction >> 16) & 0xff;
-    // Arg 2
-    instructionBuffers[2] = (instruction >> 8) & 0xff;
-    // Arg 3
     instructionBuffers[3] = instruction & 0xff;
+    // Arg 1
+    instructionBuffers[2] = (instruction >> 8) & 0xff;
+    // Arg 2
+    instructionBuffers[1] = (instruction >> 16) & 0xff;
+    // Arg 3
+    instructionBuffers[0] = (instruction >> 24) & 0xff;
 
     // Do the instructions
-    switch (instructionBuffers[0])
+    switch (instructionBuffers[3])
     {
         case 0x00:
             // No OP
@@ -114,54 +114,54 @@ bool CPU::step()
         // ARITHMETIC
         case 0x01:
             // add
-            registerBuffers[0] = getRegister(instructionBuffers[2]);
-            registerBuffers[1] = getRegister(instructionBuffers[3]);
+            registerBuffers[0] = getRegister(instructionBuffers[1]);
+            registerBuffers[1] = getRegister(instructionBuffers[0]);
             signedBuffer = *(int32_t*)&registerBuffers[0];
             signedBuffer += *(int32_t*)&registerBuffers[1];
-            setRegister(instructionBuffers[1], *(uint32_t*)&signedBuffer);
+            setRegister(instructionBuffers[2], *(uint32_t*)&signedBuffer);
             break;
         case 0x02:
             // sub
-            registerBuffers[0] = getRegister(instructionBuffers[2]);
-            registerBuffers[1] = getRegister(instructionBuffers[3]);
+            registerBuffers[0] = getRegister(instructionBuffers[1]);
+            registerBuffers[1] = getRegister(instructionBuffers[0]);
             signedBuffer = *(int32_t*)&registerBuffers[0];
             signedBuffer -= *(int32_t*)&registerBuffers[1];
-            setRegister(instructionBuffers[1], *(uint32_t*)&signedBuffer);
+            setRegister(instructionBuffers[2], *(uint32_t*)&signedBuffer);
             break;
         case 0x03:
             // addi
-            registerBuffers[0] = getRegister(instructionBuffers[2]);
+            registerBuffers[0] = getRegister(instructionBuffers[1]);
             signedBuffer = *(int32_t*) &registerBuffers[0];
-            signedBuffer += *(int8_t*) &instructionBuffers[3];
-            setRegister(instructionBuffers[1], *(uint32_t*)&signedBuffer);
+            signedBuffer += *(int8_t*) &instructionBuffers[0];
+            setRegister(instructionBuffers[2], *(uint32_t*)&signedBuffer);
             break;
         case 0x04:
             // addu
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])+getRegister(instructionBuffers[3]));
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1])+getRegister(instructionBuffers[0]));
             break;
         case 0x05:
             // subu
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])-getRegister(instructionBuffers[3]));
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1])-getRegister(instructionBuffers[0]));
             break;
         case 0x06:
             // addiu
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])+instructionBuffers[3]);
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1])+instructionBuffers[0]);
             break;
         case 0x07:
             // mul
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])* getRegister(instructionBuffers[3]));
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1])* getRegister(instructionBuffers[0]));
             break;
         case 0x08:
             // mult
-            multiplicationBuffer = getRegister(instructionBuffers[2]);
-            multiplicationBuffer *= getRegister(instructionBuffers[3]);
+            multiplicationBuffer = getRegister(instructionBuffers[1]);
+            multiplicationBuffer *= getRegister(instructionBuffers[0]);
             hi = ((*(uint64_t*)&multiplicationBuffer) >> 32) & 0xFFFFFFFF;
             lo = (*(uint64_t*)&multiplicationBuffer) & 0xFFFFFFFF;
             break;
         case 0x09:
             // div
-            registerBuffers[0] = getRegister(instructionBuffers[2]);
-            registerBuffers[1] = getRegister(instructionBuffers[3]);
+            registerBuffers[0] = getRegister(instructionBuffers[1]);
+            registerBuffers[1] = getRegister(instructionBuffers[0]);
             divisionBuffer = *(int32_t*)&registerBuffers[0];
             divisionBuffer %= *(int32_t*)&registerBuffers[1];
             hi = *(uint32_t*)&divisionBuffer;
@@ -172,140 +172,142 @@ bool CPU::step()
         // LOGICAL
         case 0x10:
             // and
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[1]) & getRegister(instructionBuffers[2]));
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1]) & getRegister(instructionBuffers[0]));
             break;
         case 0x11:
             // or
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[1]) | getRegister(instructionBuffers[2]));
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1]) | getRegister(instructionBuffers[0]));
             break;
         case 0x12:
             // andi
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])&instructionBuffers[3]);
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1])&instructionBuffers[0]);
             break;
         case 0x13:
             // ori
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2])|instructionBuffers[3]);
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1])|instructionBuffers[0]);
             break;
         case 0x14:
             // sll
-            setRegister(instructionBuffers[1],getRegister(instructionBuffers[2]) << instructionBuffers[3]);
+            setRegister(instructionBuffers[2],getRegister(instructionBuffers[1]) << instructionBuffers[0]);
             break;
         case 0x15:
             // srl
-            setRegister(instructionBuffers[1],getRegister(instructionBuffers[2]) >> instructionBuffers[3]);
+            setRegister(instructionBuffers[2],getRegister(instructionBuffers[1]) >> instructionBuffers[0]);
             break;
         // DATA TRANSFER
         case 0x21:
             // lw
-            loadWord(getRegister(instructionBuffers[3]) + instructionBuffers[2], &wordBuffer);
-            setRegister(instructionBuffers[1], wordBuffer);
+            loadWord(getRegister(instructionBuffers[0]) + instructionBuffers[1], &wordBuffer);
+            setRegister(instructionBuffers[2], wordBuffer);
             break;
         case 0x22:
             // sw
-            wordBuffer = getRegister(instructionBuffers[1]);
-            setWord(getRegister(instructionBuffers[3]) + instructionBuffers[2],&wordBuffer);
+            wordBuffer = getRegister(instructionBuffers[2]);
+            setWord(getRegister(instructionBuffers[0]) + instructionBuffers[1],&wordBuffer);
             break;
         case 0x23:
             // lui
             wordBuffer = ((uint16_t*)instructionBuffers)[1];
             wordBuffer = wordBuffer << 16;
-            setRegister(instructionBuffers[1], wordBuffer);
+            setRegister(instructionBuffers[2], wordBuffer);
             break;
         case 0x24:
             // li
-            setRegister(instructionBuffers[1],((uint16_t*)instructionBuffers)[1]);
+            setRegister(instructionBuffers[2],((uint16_t*)instructionBuffers)[0]);
             break;
         case 0x25:
             // mfhi
-            setRegister(instructionBuffers[2], hi);
+            setRegister(instructionBuffers[1], hi);
             break;
         case 0x26:
             // mflo
-            setRegister(instructionBuffers[2], lo);
+            setRegister(instructionBuffers[1], lo);
             break;
         case 0x27:
             // move
-            setRegister(instructionBuffers[1], getRegister(instructionBuffers[2]));
+            setRegister(instructionBuffers[2], getRegister(instructionBuffers[1]));
             break;
         // Conditional Branching
         case 0x30:
             // beq
-            if(getRegister(instructionBuffers[1])== getRegister(instructionBuffers[2]))
+            if(getRegister(instructionBuffers[2])== getRegister(instructionBuffers[1]))
             {
-                programCounter += instructionBuffers[3];
+                programCounter += instructionBuffers[0];
             }
             break;
         case 0x31:
             // bne
-            if(getRegister(instructionBuffers[1]) != getRegister(instructionBuffers[2]))
+            if(getRegister(instructionBuffers[2]) != getRegister(instructionBuffers[1]))
             {
-                programCounter += instructionBuffers[3];
+                programCounter += instructionBuffers[0];
             }
             break;
         case 0x32:
             // bgt
-            if(getRegister(instructionBuffers[1]) > getRegister(instructionBuffers[2]))
+            if(getRegister(instructionBuffers[2]) > getRegister(instructionBuffers[1]))
             {
-                programCounter += instructionBuffers[3];
+                programCounter += instructionBuffers[0];
             }
             break;
         case 0x33:
             // bge
-            if(getRegister(instructionBuffers[1]) >= getRegister(instructionBuffers[2]))
+            if(getRegister(instructionBuffers[2]) >= getRegister(instructionBuffers[1]))
             {
-                programCounter += instructionBuffers[3];
+                programCounter += instructionBuffers[0];
             }
             break;
         case 0x34:
             // blt
-            if(getRegister(instructionBuffers[1]) < getRegister(instructionBuffers[2]))
+            if(getRegister(instructionBuffers[2]) < getRegister(instructionBuffers[1]))
             {
-                programCounter += instructionBuffers[3];
+                programCounter += instructionBuffers[0];
             }
             break;
         case 0x35:
             // ble
-            if(getRegister(instructionBuffers[1]) <= getRegister(instructionBuffers[2]))
+            if(getRegister(instructionBuffers[2]) <= getRegister(instructionBuffers[1]))
             {
-                programCounter += instructionBuffers[3];
+                programCounter += instructionBuffers[0];
             }
             break;
         // Comparison
         case 0x40:
             // slt
-            if (getRegister(instructionBuffers[2])< getRegister(instructionBuffers[3]))
+            if (getRegister(instructionBuffers[1])< getRegister(instructionBuffers[0]))
             {
-                setRegister(instructionBuffers[1],1);
+                setRegister(instructionBuffers[2],1);
             }
             else
             {
-                setRegister(instructionBuffers[1],0);
+                setRegister(instructionBuffers[2],0);
             }
             break;
         case 0x41:
             // slti
-            if (getRegister(instructionBuffers[2]) < instructionBuffers[3])
+            if (getRegister(instructionBuffers[1]) < instructionBuffers[0])
             {
-                setRegister(instructionBuffers[1],1);
+                setRegister(instructionBuffers[2],1);
             }
             else
             {
-                setRegister(instructionBuffers[1],0);
+                setRegister(instructionBuffers[2],0);
             }
             break;
         // Jumps
         case 0x50:
             // j
-            programCounter = instruction & 0x00FFFFFF;
+            instructionBuffers[3] = 00;
+            programCounter = *(uint32_t*)instructionBuffers;
             return false;
         case 0x51:
             // jr
-            programCounter = getRegister(instructionBuffers[1]);
+            programCounter = getRegister(instructionBuffers[2]);
             return false;
         case 0x52:
             // jal
             setRegister(31,programCounter+4);
-            programCounter = instruction & 0x00FFFFFF;
+            instructionBuffers[3] = 00;
+            programCounter = *(uint32_t*)instructionBuffers;
             return false;
         case 0xFF:
             // hlt
